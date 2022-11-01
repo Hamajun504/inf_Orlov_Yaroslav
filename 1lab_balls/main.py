@@ -1,9 +1,10 @@
 import pygame
 from random import randint
-pygame.init()
+from math import sin, cos, radians
+
 
 FPS = 30
-BALLS_QUANTITY = 5
+BALLS_QUANTITY = 10
 VELOCITY = 30
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
@@ -24,8 +25,8 @@ class Ball:
         self.x = randint(100, 700)
         self.y = randint(100, 500)
         self.r = randint(30, 50)
-        self.vx = randint(0, VELOCITY)
-        self.vy = randint(0, VELOCITY)
+        self.vx = randint(-VELOCITY, VELOCITY)
+        self.vy = randint(-VELOCITY, VELOCITY)
         self.color = COLORS[randint(0, 5)]
 
     def draw(self):
@@ -55,39 +56,54 @@ class Ball:
             self.vy = -self.vy
 
 
-def new_ball():
-    """ draw new ball """
-    global x, y, r
-    x = randint(100, 700)
-    y = randint(100, 500)
-    r = randint(30, 50)
-    color = COLORS[randint(0, 5)]
-    pygame.draw.circle(screen, color, (x, y), r)
+class Target:
+    def __init__(self):
+        """ мишень движется по окружности радиуса r и описывается одним углом """
+        self.angle = randint(0, 360)
+        self.angle_vel = randint(-VELOCITY, VELOCITY)
+        self.r = randint(200, 350)
+        self.x = SCREEN_WIDTH // 2 + self.r * cos(radians(self.angle))
+        self.y = SCREEN_HEIGHT // 2 + self.r * sin(radians(self.angle))
+
+    def draw(self):
+        """ открисовывает мишень """
+        #global GREEN, YELLOW, RED
+        pygame.draw.circle(screen, GREEN, (self.x, self.y), 50)
+        pygame.draw.circle(screen, YELLOW, (self.x, self.y), 35)
+        pygame.draw.circle(screen, RED, (self.x, self.y), 20)
+
+    def move_step(self):
+        """ шаг движения с угловой скоростью """
+        self.angle += self.angle_vel
+        self.x = SCREEN_WIDTH // 2 + self.r * cos(radians(self.angle))
+        self.y = SCREEN_HEIGHT // 2 + self.r * sin(radians(self.angle))
 
 
-def click(event):
-    print(x, y, r)
-
-
-def event_processing(balls):
+def event_processing(balls, target):
     """ обрабатывает события:
         закрытие, клик в круг"""
-    global finished, points
+    global finished, points, clicks
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
         elif event.type == pygame.MOUSEBUTTONDOWN:
+            clicks += 1
             for ball in balls:
                 if (event.pos[0] - ball.x) ** 2 + (event.pos[1] - ball.y) ** 2 <= ball.r ** 2:
                     points += 1
+            if (event.pos[0] - target.x) ** 2 + (event.pos[1] - target.y) ** 2 <= target.r ** 2:
+                points += 5
 
 
+pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.update()
 clock = pygame.time.Clock()
+clicks = 0
 points = 0
 finished = False
 balls = [Ball() for i in range(BALLS_QUANTITY)]
+target = Target()
 
 while not finished:
     screen.fill(BLACK)
@@ -95,9 +111,14 @@ while not finished:
         ball.move_step()
         ball.wall_reflection()
         ball.draw()
+    target.move_step()
+    target.draw()
     pygame.display.update()
     clock.tick(FPS)
-    event_processing(balls)
+    event_processing(balls, target)
 
 pygame.quit()
-print(points)
+try:
+    print(points / clicks)
+except ZeroDivisionError:
+    print(0)
