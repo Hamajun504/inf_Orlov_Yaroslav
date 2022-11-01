@@ -1,6 +1,7 @@
 import pygame
 from random import randint
 from math import sin, cos, radians
+import pandas as pd
 
 
 FPS = 30
@@ -35,7 +36,6 @@ class Ball:
 
     def move_step(self):
         """ сдвигает круг по скорости """
-        global dT
         self.x += self.vx
         self.y += self.vy
 
@@ -67,7 +67,6 @@ class Target:
 
     def draw(self):
         """ открисовывает мишень """
-        #global GREEN, YELLOW, RED
         pygame.draw.circle(screen, GREEN, (self.x, self.y), 50)
         pygame.draw.circle(screen, YELLOW, (self.x, self.y), 35)
         pygame.draw.circle(screen, RED, (self.x, self.y), 20)
@@ -95,6 +94,19 @@ def event_processing(balls, target):
                 points += 5
 
 
+def write_table(points, clicks):
+    try:
+        score = round(points / clicks, 3)
+    except ZeroDivisionError:
+        score = 0.
+    name = input('Введите имя (Enter если не нужно сохранять результат)\n')
+    if name != '':
+        df = pd.read_csv('table.csv', header=0, index_col=0)
+        df = pd.concat([df, pd.DataFrame({'Name': [name], 'Score': [score]})], ignore_index=True)
+        df = df.sort_values(by='Score', ascending=False)
+        df.to_csv('table.csv')
+
+
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.update()
@@ -118,7 +130,5 @@ while not finished:
     event_processing(balls, target)
 
 pygame.quit()
-try:
-    print(points / clicks)
-except ZeroDivisionError:
-    print(0)
+
+write_table(points, clicks)
