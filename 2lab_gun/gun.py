@@ -15,14 +15,17 @@ BLACK = (0, 0, 0)
 WHITE = 0xFFFFFF
 GREY = 0x7D7D7D
 GAME_COLORS = [RED, BLUE, YELLOW, GREEN, MAGENTA, CYAN]
+
 GRAV_ACC = 5
 
 WIDTH = 800
 HEIGHT = 600
 
 
+
+
 class Ball:
-    def __init__(self, screen: pygame.Surface, x=40, y=450):
+    def __init__(self, screen: pygame.Surface, x=40, y=450, vx=0, vy=0, r=15):
         """ Конструктор класса ball
 
         Args:
@@ -32,9 +35,9 @@ class Ball:
         self.screen = screen
         self.x = x
         self.y = y
-        self.r = 10
-        self.vx = 0
-        self.vy = 0
+        self.r = r
+        self.vx = vx
+        self.vy = vy
         self.color = choice(GAME_COLORS)
         self.live = 30
 
@@ -104,13 +107,12 @@ class Gun:
         Происходит при отпускании кнопки мыши.
         Начальные значения компонент скорости мяча vx и vy зависят от положения мыши.
         """
-        global balls, bullet
+        global bullet
         bullet += 1
-        new_ball = Ball(self.screen)
-        new_ball.r += 5
-        self.an = math.atan2((event.pos[1]-new_ball.y), (event.pos[0]-new_ball.x))
-        new_ball.vx = self.f2_power * math.cos(self.an)
-        new_ball.vy = - self.f2_power * math.sin(self.an)
+        new_ball = Ball(self.screen, vx=self.f2_power * math.cos(self.an), vy=- self.f2_power * math.sin(self.an))
+        #self.an = math.atan2((event.pos[1]-new_ball.y), (event.pos[0]-new_ball.x))
+        #new_ball.vx = self.f2_power * math.cos(self.an)
+        #new_ball.vy = - self.f2_power * math.sin(self.an)
         balls.append(new_ball)
         self.f2_on = 0
         self.f2_power = 10
@@ -118,7 +120,12 @@ class Gun:
     def targetting(self, event):
         """Прицеливание. Зависит от положения мыши."""
         if event:
-            self.an = math.atan((event.pos[1]-450) / (event.pos[0]-20))
+            if event.pos[0] > 20:
+                self.an = math.atan((event.pos[1]-450) / (event.pos[0]-20))
+            elif event.pos[0] < 20:
+                self.an = math.pi + math.atan((event.pos[1]-450) / (event.pos[0]-20))
+            else:
+                self.an = (event.pos[1] > 450) * math.pi / 2
         if self.f2_on:
             self.color = RED
         else:
@@ -146,11 +153,13 @@ class Target:
         self.points = 0
         self.alive = True
         self.screen = screen
-    # FIXME: don't work!!! How to call this functions when object is created?
         self.new_target()
 
     def new_target(self):
         """ Инициализация новой цели. """
+        global bullet
+        bullet = 0
+        self.alive = True
         self.x = randint(600, 780)
         self.y = randint(300, 550)
         self.r = randint(2, 50)
@@ -161,35 +170,44 @@ class Target:
         self.points += points
 
     def draw(self):
-        pygame.draw.circle(
-            self.screen,
-            self.color,
-            (self.x, self.y),
-            self.r
-        )
+        if self.alive:
+            pygame.draw.circle(
+                self.screen,
+                self.color,
+                (self.x, self.y),
+                self.r
+            )
 
 
-pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-bullet = 0
-balls = []
+def extinction():
+    dead_indexes = []
+    for i in range(len(balls)):
+        if balls[i].dead():
+            dead_indexes.append(i)
+    for i in dead_indexes:
+        del balls[i]
 
-clock = pygame.time.Clock()
-gun = Gun(screen)
-target = Target(screen)
-finished = False
 
-while not finished:
+def drawing():
     screen.fill(WHITE)
     gun.draw()
     target.draw()
     for b in balls:
         b.draw()
+    if target.alive:
+        number = FONT.render(str(target.points), True, (0, 0, 0))
+        screen.blit(number, (40, 40))
+    else:
+        global bullet
+        bullet_message = FONT.render(f"You destroy target with {bullet} bullet{'s' * (bullet != 1)}", True, (0, 0, 0))
+        screen.blit(bullet_message, (WIDTH / 4, HEIGHT / 2))
     pygame.display.update()
 
-    clock.tick(FPS)
+
+def event_processing():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            global finished
             finished = True
         elif event.type == pygame.MOUSEBUTTONDOWN:
             gun.fire2_start(event)
@@ -198,16 +216,38 @@ while not finished:
         elif event.type == pygame.MOUSEMOTION:
             gun.targetting(event)
 
-    for i in range(len(balls)):
-        if balls[i].dead():
-            del [balls[i]]
 
+def moving():
+    global timeout
+    timeout += 1
     for b in balls:
         b.move()
         if b.hittest(target) and target.alive:
-            #target.alive = False
+            target.alive = False
             target.hit()
-            target.new_target()
+            timeout = 0
+    if timeout > FPS and not target.alive:
+        target.new_target()
+
+
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+FONT = pygame.font.Font(None, 40)
+bullet = 0
+balls = []
+
+clock = pygame.time.Clock()
+gun = Gun(screen)
+target = Target(screen)
+finished = False
+timeout = 0
+
+while not finished:
+    drawing()
+    clock.tick(FPS)
+    event_processing()
+    extinction()
+    moving()
     gun.power_up()
 
 pygame.quit()
