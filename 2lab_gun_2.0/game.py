@@ -3,6 +3,7 @@ from config import *
 import projectile
 from random import randint
 import enemy
+import cannon
 
 
 class Game:
@@ -19,15 +20,15 @@ class Game:
         self.enemy_time = {}
         for enemy in self.enemy_period.keys():
             self.enemy_time[enemy] = randint(0, self.enemy_period[enemy])
-        #self.canon =
+        self.cannon = cannon.Cannon(self.screen)
 
     def draw(self):
         self.screen.fill(WHITE)
-        #self.canon.draw()
         for proj in self.projectiles:
             proj.draw()
         for enemy in self.enemies:
             enemy.draw()
+        self.cannon.draw()
         points = self.font.render(str(self.points), True, (0, 0, 0))
         self.screen.blit(points, (40, 40))
         pygame.display.update()
@@ -44,12 +45,19 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.finished = True
+            elif event.type == pygame.MOUSEMOTION:
+                self.cannon.targeting(event.pos[0], event.pos[1])
+            elif event.type == pygame.MOUSEBUTTONUP:
+                self.cannon.fire_end()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.cannon.fire_start()
 
     def move(self):
         for proj in self.projectiles:
             proj.move()
         for enemy in self.enemies:
             enemy.move()
+        self.cannon.charge()
 
     def spawn(self):
         if self.enemy_time["Circle"] < self.enemy_period["Circle"]:

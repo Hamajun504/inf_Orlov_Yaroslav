@@ -34,6 +34,14 @@ class Circle(Target):
             (self.x, self.y),
             self.r,
         )
+        pygame.draw.circle(
+            self.screen,
+            BLACK,
+            (self.x, self.y),
+            self.r,
+            width=1
+        )
+
 
     def move(self):
         self.x += self.vx
