@@ -2,6 +2,7 @@ import pygame
 from config import *
 import projectile
 from random import randint
+import enemy
 
 
 class Game:
@@ -51,12 +52,15 @@ class Game:
             enemy.move()
 
     def spawn(self):
-        if self.enemy_time['Ball'] < self.enemy_period['Ball']:
-            self.enemy_time['Ball'] += 1
+        if self.enemy_time["Circle"] < self.enemy_period["Circle"]:
+            self.enemy_time["Circle"] += 1
         else:
-            self.enemy_time['Ball'] = 0
-            self.enemies.append(projectile.Ball(self.screen,
-                                                x=randint(0, WIDTH), y=randint(0, HEIGHT * 2 / 3),
-                                                vx=randint(-VELOCITY, VELOCITY), vy=randint(-VELOCITY, VELOCITY),
-                                                r=randint(30, 60)))
+            self.enemy_time["Circle"] = 0
+            r = randint(20, 40)
+            self.enemies.append(enemy.Circle(self.screen,
+                                             x=randint(r, WIDTH - r), y=randint(r, HEIGHT * 2 / 3 - r),
+                                             vx=randint(-VELOCITY, VELOCITY), vy=randint(-VELOCITY, VELOCITY),
+                                             r=r))
+
+
 
