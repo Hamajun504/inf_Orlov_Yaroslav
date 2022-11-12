@@ -1,6 +1,7 @@
 from config import *
-from math import atan, pi
+from math import atan, pi, sin, cos
 import pygame
+import projectile
 
 
 class Cannon:
@@ -15,7 +16,8 @@ class Cannon:
         self.power = self.power_min
         self.charging = False
         self.self_color = GREEN
-        self.gun = pygame.Surface((80, 80))
+        self.gun_length = 40
+        self.gun = pygame.Surface((2 * self.gun_length, 2 * self.gun_length))
         self.gun.fill(BLACK)
         pygame.draw.rect(self.gun, DARK_GREEN, (40, 35, 40, 10))
         self.gun.set_colorkey((0, 0, 0))
@@ -127,15 +129,26 @@ class Cannon:
         self.charging = True
 
     def fire_end(self):
-        pygame.draw.rect(self.gun, DARK_GREEN, (40, 35, 40, 10))
+        length = 2 * self.gun_length * (1 + (self.power - self.power_bound) /
+                                        (self.power_max - self.power_bound))
+        ball_x = self.x + length * cos(self.an)
+        ball_y = self.y - length * sin(self.an)
+        ball_vx = VELOCITY * cos(self.an) * self.power / self.power_min / 1.8 + \
+                  self.moving_right * VELOCITY - self.moving_left * VELOCITY
+        ball_vy = -VELOCITY * sin(self.an) * self.power / self.power_min / 1.8 + \
+                  self.moving_down * VELOCITY - self.moving_up * VELOCITY
+
+        pygame.draw.rect(self.gun, DARK_GREEN, (self.gun_length, self.gun_length - 5, self.gun_length, 10))
         self.power = self.power_min
         self.charging = False
+
+        return projectile.Ball(self.screen, ball_x, ball_y, ball_vx, ball_vy, BALL_SIZE)
 
     def draw(self):
         gun = self.gun
         if self.power > self.power_bound:
-            gun = pygame.transform.scale(gun, (80 * (1 + (self.power - self.power_bound) /
-                                                     (self.power_max - self.power_bound)), 80))
+            gun = pygame.transform.scale(gun, (2 * self.gun_length * (1 + (self.power - self.power_bound) /
+                                                     (self.power_max - self.power_bound)), 2 * self.gun_length))
         gun = pygame.transform.rotate(gun, self.an / pi * 180)
         gun_coords = gun.get_rect(center=(self.x, self.y))
         self.screen.blit(gun, gun_coords)

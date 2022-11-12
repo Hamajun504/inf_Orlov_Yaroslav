@@ -41,6 +41,7 @@ class Game:
             self.event_processing()
             self.move()
             self.spawn()
+            self.extinction()
 
     def event_processing(self):
         for event in pygame.event.get():
@@ -49,7 +50,7 @@ class Game:
             elif event.type == pygame.MOUSEMOTION:
                 self.cannon.targeting(event.pos[0], event.pos[1])
             elif event.type == pygame.MOUSEBUTTONUP:
-                self.cannon.fire_end()
+                self.projectiles.append(self.cannon.fire_end())
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self.cannon.fire_start()
             elif event.type == pygame.KEYDOWN:
@@ -88,6 +89,15 @@ class Game:
                                              x=randint(r, WIDTH - r), y=randint(r, HEIGHT * 2 / 3 - r),
                                              vx=randint(-VELOCITY, VELOCITY), vy=randint(-VELOCITY, VELOCITY),
                                              r=r))
+
+    def extinction(self):
+        dead = []
+        for i in range(len(self.projectiles)):
+            if isinstance(self.projectiles[i], projectile.Ball):
+                if self.projectiles[i].time >= BALL_LIFE:
+                    dead.append(i)
+        for i in dead[::-1]:
+            del self.projectiles[i]
 
 
 
