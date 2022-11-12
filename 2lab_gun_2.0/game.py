@@ -31,6 +31,7 @@ class Game:
         self.cannon.draw()
         points = self.font.render(str(self.points), True, (0, 0, 0))
         self.screen.blit(points, (40, 40))
+        pygame.draw.line(self.screen, RED, (0, HEIGHT * 2 / 3), (WIDTH, HEIGHT * 2 / 3))
         pygame.display.update()
 
     def run(self):
@@ -51,13 +52,31 @@ class Game:
                 self.cannon.fire_end()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self.cannon.fire_start()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_w:
+                    self.cannon.start_move_up()
+                elif event.key == pygame.K_s:
+                    self.cannon.start_move_down()
+                elif event.key == pygame.K_d:
+                    self.cannon.start_move_right()
+                elif event.key == pygame.K_a:
+                    self.cannon.start_move_left()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_w:
+                    self.cannon.stop_move_up()
+                elif event.key == pygame.K_s:
+                    self.cannon.stop_move_down()
+                elif event.key == pygame.K_d:
+                    self.cannon.stop_move_right()
+                elif event.key == pygame.K_a:
+                    self.cannon.stop_move_left()
 
     def move(self):
         for proj in self.projectiles:
             proj.move()
         for enemy in self.enemies:
             enemy.move()
-        self.cannon.charge()
+        self.cannon.move()
 
     def spawn(self):
         if self.enemy_time["Circle"] < self.enemy_period["Circle"]:
