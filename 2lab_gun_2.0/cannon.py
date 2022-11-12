@@ -122,7 +122,7 @@ class Cannon:
     def charge(self):
         if self.charging:
             if self.power <= self.power_max:
-                self.power += 1
+                self.power += 1.5
 
     def fire_start(self):
         pygame.draw.rect(self.gun, RED, (40, 35, 40, 10))

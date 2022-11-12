@@ -7,13 +7,14 @@ import cannon
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, screen):
         self.points = 0
         self.enemies = []
         self.projectiles = []
         self.finished = False
-        pygame.init()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        #pygame.init()
+        self.screen = screen
+        self.screen.fill(WHITE)
         self.font = pygame.font.SysFont("Verdana", 40)
         self.clock = pygame.time.Clock()
         self.enemy_period = PERIODS
@@ -21,6 +22,7 @@ class Game:
         for enemy in self.enemy_period.keys():
             self.enemy_time[enemy] = randint(0, self.enemy_period[enemy])
         self.cannon = cannon.Cannon(self.screen)
+        self.quit = False
 
     def draw(self):
         self.screen.fill(WHITE)
@@ -40,13 +42,16 @@ class Game:
             self.clock.tick(FPS)
             self.event_processing()
             self.move()
+            self.collision()
             self.spawn()
             self.extinction()
+        return self.points, self.quit
 
     def event_processing(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.finished = True
+                self.quit = True
             elif event.type == pygame.MOUSEMOTION:
                 self.cannon.targeting(event.pos[0], event.pos[1])
             elif event.type == pygame.MOUSEBUTTONUP:
@@ -99,5 +104,18 @@ class Game:
         for i in dead[::-1]:
             del self.projectiles[i]
 
+    def collision(self):
+        for proj in self.projectiles:
+            dead = []
+            for i in range(len(self.enemies)):
+                if (proj.x - self.enemies[i].x) ** 2 + (proj.y - self.enemies[i].y) ** 2 < \
+                        (proj.r + self.enemies[i].r) ** 2:
+                    dead.append(i)
+            for i in dead[::-1]:
+                self.points += self.enemies[i].points
+                del self.enemies[i]
 
+        for proj in self.projectiles:
+            if (proj.x - self.cannon.x) ** 2 + (proj.y - self.cannon.y) ** 2 < (proj.r + self.cannon.r) ** 2:
+                self.finished = True
 
