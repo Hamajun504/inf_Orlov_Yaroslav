@@ -85,6 +85,11 @@ class Game:
         self.cannon.move()
 
     def spawn(self):
+        for en in self.enemies:
+            if isinstance(en, enemy.Circle):
+                en.timer += 1
+                if en.timer % self.enemy_period["Bugs"] == 0:
+                    self.enemies.append(enemy.Bug(self.screen, en, self.cannon))
         if self.enemy_time["Circle"] < self.enemy_period["Circle"]:
             self.enemy_time["Circle"] += 1
         else:
@@ -96,13 +101,19 @@ class Game:
                                              r=r))
 
     def extinction(self):
-        dead = []
+        dead_proj = []
+        dead_enemies = []
         for i in range(len(self.projectiles)):
             if isinstance(self.projectiles[i], projectile.Ball):
                 if self.projectiles[i].time >= BALL_LIFE:
-                    dead.append(i)
-        for i in dead[::-1]:
+                    dead_proj.append(i)
+            elif isinstance(self.projectiles[i], enemy.Bug):
+                if self.projectiles[i].is_dead():
+                    dead_enemies.append(i)
+        for i in dead_proj[::-1]:
             del self.projectiles[i]
+        for i in dead_enemies[::-1]:
+            del self.enemies[i]
 
     def collision(self):
         for proj in self.projectiles:
@@ -118,4 +129,9 @@ class Game:
         for proj in self.projectiles:
             if (proj.x - self.cannon.x) ** 2 + (proj.y - self.cannon.y) ** 2 < (proj.r + self.cannon.r) ** 2:
                 self.finished = True
+
+        for en in self.enemies:
+            if (en.x - self.cannon.x) ** 2 + (en.y - self.cannon.y) ** 2 < (en.r + self.cannon.r) ** 2:
+                self.finished = True
+                break
 
