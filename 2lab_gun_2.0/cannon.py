@@ -140,9 +140,10 @@ class Cannon:
 
         pygame.draw.rect(self.gun, DARK_GREEN, (self.gun_length, self.gun_length - 5, self.gun_length, 10))
         self.power = self.power_min
-        self.charging = False
 
-        return projectile.Ball(self.screen, ball_x, ball_y, ball_vx, ball_vy, BALL_SIZE)
+        if self.charging:
+            self.charging = False
+            return projectile.Ball(self.screen, ball_x, ball_y, ball_vx, ball_vy, BALL_SIZE)
 
     def draw(self):
         gun = self.gun

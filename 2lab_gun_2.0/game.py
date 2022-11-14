@@ -55,7 +55,11 @@ class Game:
             elif event.type == pygame.MOUSEMOTION:
                 self.cannon.targeting(event.pos[0], event.pos[1])
             elif event.type == pygame.MOUSEBUTTONUP:
-                self.projectiles.append(self.cannon.fire_end())
+                proj = self.cannon.fire_end()
+                if proj is None:
+                    pass
+                else:
+                    self.projectiles.append(proj)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self.cannon.fire_start()
             elif event.type == pygame.KEYDOWN:
